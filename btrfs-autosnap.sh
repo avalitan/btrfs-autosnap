@@ -1,9 +1,13 @@
 #!/bin/bash
-if [[ $EUID -ne 0 ]]
-then
-    sudo $0 $@ || su -c $0 $@ || exit 1
-    exit 0
-fi
+case "${1}" in
+    -l|--list|-r|--remove-old) 
+        if [[ $EUID -ne 0 ]]
+        then
+            sudo $0 $@ || su -c $0 $@ || exit 1
+            exit 0
+        fi
+    ;;
+esac
 
 source /etc/btrfs-autosnap.conf 2>/dev/null
 
