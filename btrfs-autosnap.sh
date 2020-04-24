@@ -1,6 +1,9 @@
 #!/bin/bash
 case "${1}" in
-    -l|--list|-r|--remove-old) 
+    -h|--help|-v|--version)
+        
+    ;;
+    *)
         if [[ $EUID -ne 0 ]]
         then
             sudo $0 $@ || su -c $0 $@ || exit 1
