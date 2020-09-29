@@ -37,13 +37,28 @@ clean() {
 }
 
 snap_delete() {
-    for sub in $(find . -maxdepth 1 -type d -name "${subvol}-*" -printf "%T@ %f\n" | sort -nr | tail +$(($old+1)) | cut -d ' ' -f 2)
-    do
-        btrfs su delete $sub &>/dev/null && echo -e "\033[1;34mDeleted old snapshot $sub\033[0m" || echo -e "\033[1;31mError while deleting old snapshot $sub!\033[0m"
-    done
-    if [[ -z "$sub" ]]
+    if [ $max_snaps -gt 0 ]
     then
-        echo -e "\033[1;34mThere are no old snapshots to be deleted!\033[0m"
+        for sub in $(find . -maxdepth 1 -type d -name "${subvol}-*" -printf "%T@ %f\n" | sort -nr | tail +$(($max_snaps+1)) | cut -d ' ' -f 2)
+        do
+            btrfs su delete $sub &>/dev/null && echo -e "\033[1;34mDeleted old snapshot $sub\033[0m" || echo -e "\033[1;31mError while deleting old snapshot $sub!\033[0m"
+        done
+        if [[ -z "$sub" ]]
+        then
+            echo -e "\033[1;34mThere are no old snapshots to be deleted!\033[0m"
+        fi
+    fi
+    
+    if [ "$max_date" != "" ]
+    then
+        date_now=$(date --date="$max_date" +%s)
+        find . -maxdepth 1 -type d -name "${subvol}-*" -printf "%T@ %f\n" | while read l
+        do
+            if [ $(echo "$l" | cut -d '.' -f 1) -lt $date_now ]
+            then
+                echo $l | cut -d ' ' -f 2
+            fi
+        done
     fi
 }
 
@@ -68,8 +83,8 @@ snap_help() {
 }
 
 snap_version() {
-    echo "btrfs-autosnap by VVL"
-    echo "version 1.0.1     30 august 2018"
+    echo "btrfs-autosnap by VVL & Avalitan"
+    echo "version 1.0.5     30 september 2020"
 }
 
 case "${1}" in
