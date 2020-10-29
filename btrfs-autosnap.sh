@@ -37,16 +37,14 @@ clean() {
 }
 
 snap_delete() {
+	deleted=0
     if [ $max_snaps -gt 0 ]
     then
         for sub in $(find . -maxdepth 1 -type d -name "${subvol}-*" -printf "%T@ %f\n" | sort -nr | tail +$(($max_snaps+1)) | cut -d ' ' -f 2)
         do
             btrfs su delete $sub &>/dev/null && echo -e "\033[1;34mDeleted old snapshot $sub\033[0m" || echo -e "\033[1;31mError while deleting old snapshot $sub!\033[0m"
+            deleted=$(( $deleted + 1 ))
         done
-        if [[ -z "$sub" ]]
-        then
-            echo -e "\033[1;34mThere are no old snapshots to be deleted!\033[0m"
-        fi
     fi
     
     if [ "$max_date" != "" ]
@@ -56,9 +54,16 @@ snap_delete() {
         do
             if [ $(echo "$l" | cut -d '.' -f 1) -lt $date_now ]
             then
-                echo $l | cut -d ' ' -f 2
+                sub="$(echo $l | cut -d ' ' -f 2)"
+                btrfs su delete $sub &>/dev/null && echo -e "\033[1;34mDeleted old snapshot $sub\033[0m" || echo -e "\033[1;31mError while deleting old snapshot $sub!\033[0m"
+                deleted=$(( $deleted + 1 ))
             fi
         done
+    fi
+    
+    if [[ $deleted -le 0 ]]
+    then
+        echo -e "\033[1;34mThere are no old snapshots to be deleted!\033[0m"
     fi
 }
 
